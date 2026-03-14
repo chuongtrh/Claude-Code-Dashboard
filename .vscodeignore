@@ -1,0 +1,10 @@
+.vscode/**
+.vscode-test/**
+webview-ui/src/**
+webview-ui/node_modules/**
+src/**
+node_modules/**
+.gitignore
+.eslintrc.json
+esbuild.js
+tsconfig.json
