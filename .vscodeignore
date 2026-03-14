@@ -1,10 +1,30 @@
+# Source files — only ship the built dist/
 .vscode/**
 .vscode-test/**
-webview-ui/src/**
-webview-ui/node_modules/**
 src/**
+webview-ui/src/**
+webview-ui/public/**
+webview-ui/node_modules/**
 node_modules/**
+
+# Config & build tooling
 .gitignore
 .eslintrc.json
 esbuild.js
 tsconfig.json
+webview-ui/tsconfig*.json
+webview-ui/vite.config.ts
+webview-ui/tailwind.config.js
+webview-ui/postcss.config.js
+webview-ui/package.json
+webview-ui/package-lock.json
+
+# Docs (kept in repo, not needed in extension)
+PRODUCT.md
+TECHNICAL.md
+DATA_SOURCES.md
+
+# Misc
+.DS_Store
+*.vsix
+.claude/**

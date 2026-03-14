@@ -3,36 +3,82 @@
   "displayName": "Claude Code Dashboard",
   "description": "Real-time dashboard for all your Claude Code projects — sessions, usage, tokens, and more.",
   "version": "0.1.0",
-  "engines": { "vscode": "^1.85.0" },
-  "categories": ["Other"],
-  "activationEvents": ["onStartupFinished"],
+  "publisher": "jspw",
+  "license": "MIT",
+  "icon": "images/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jspw/Claude-Code-Dashboard"
+  },
+  "homepage": "https://github.com/jspw/Claude-Code-Dashboard#readme",
+  "bugs": {
+    "url": "https://github.com/jspw/Claude-Code-Dashboard/issues"
+  },
+  "keywords": [
+    "claude",
+    "claude code",
+    "anthropic",
+    "ai",
+    "dashboard",
+    "usage",
+    "tokens",
+    "cost"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
   "contributes": {
     "viewsContainers": {
-      "activitybar": [{
-        "id": "claude-dashboard",
-        "title": "Claude Dashboard",
-        "icon": "$(pulse)"
-      }]
+      "activitybar": [
+        {
+          "id": "claude-dashboard",
+          "title": "Claude Dashboard",
+          "icon": "$(pulse)"
+        }
+      ]
     },
     "views": {
-      "claude-dashboard": [{
-        "id": "claudeDashboard.sidebar",
-        "name": "Claude Projects",
-        "type": "tree"
-      }]
+      "claude-dashboard": [
+        {
+          "id": "claudeDashboard.sidebar",
+          "name": "Claude Projects",
+          "type": "tree"
+        }
+      ]
     },
     "commands": [
-      { "command": "claudeDashboard.openDashboard", "title": "Open Full Dashboard", "category": "Claude Dashboard" },
-      { "command": "claudeDashboard.openProject", "title": "Open Project Detail", "category": "Claude Dashboard" },
-      { "command": "claudeDashboard.refresh", "title": "Refresh", "category": "Claude Dashboard", "icon": "$(refresh)" }
+      {
+        "command": "claudeDashboard.openDashboard",
+        "title": "Open Full Dashboard",
+        "category": "Claude Dashboard"
+      },
+      {
+        "command": "claudeDashboard.openProject",
+        "title": "Open Project Detail",
+        "category": "Claude Dashboard"
+      },
+      {
+        "command": "claudeDashboard.refresh",
+        "title": "Refresh",
+        "category": "Claude Dashboard",
+        "icon": "$(refresh)"
+      }
     ],
     "menus": {
-      "view/title": [{
-        "command": "claudeDashboard.refresh",
-        "when": "view == claudeDashboard.sidebar",
-        "group": "navigation"
-      }]
+      "view/title": [
+        {
+          "command": "claudeDashboard.refresh",
+          "when": "view == claudeDashboard.sidebar",
+          "group": "navigation"
+        }
+      ]
     },
     "configuration": {
       "title": "Claude Dashboard",
