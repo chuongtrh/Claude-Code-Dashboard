@@ -17,9 +17,24 @@ export class EventWatcher {
   }
 
   start(context: vscode.ExtensionContext) {
+    // Rotate events file if it's too large (> 5MB → keep last 1000 lines)
+    this.rotateEventsFile();
     // Poll the events file every 500ms for new hook events
     this.timer = setInterval(() => this.checkForNewEvents(), 500);
     context.subscriptions.push({ dispose: () => clearInterval(this.timer!) });
+  }
+
+  private rotateEventsFile() {
+    try {
+      if (!fs.existsSync(this.eventsFile)) { return; }
+      const stat = fs.statSync(this.eventsFile);
+      if (stat.size <= 5 * 1024 * 1024) { return; } // 5MB threshold
+      const content = fs.readFileSync(this.eventsFile, 'utf-8');
+      const lines = content.trim().split('\n');
+      const kept = lines.slice(-1000).join('\n') + '\n';
+      fs.writeFileSync(this.eventsFile, kept);
+      this.lastSize = Buffer.byteLength(kept, 'utf-8');
+    } catch { /* ignore rotation errors */ }
   }
 
   private checkForNewEvents() {

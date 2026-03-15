@@ -251,11 +251,11 @@ export class DashboardStore extends EventEmitter {
     if (!fs.existsSync(projectsDir)) { return; }
 
     // Read live session IDs once for all projects instead of per-project
-    const liveSessionIds = this.getLiveSessionIds();
+    const liveResult = this.getLiveSessionIds();
     const entries = fs.readdirSync(projectsDir, { withFileTypes: true });
     for (const entry of entries) {
       if (!entry.isDirectory()) { continue; }
-      await this.loadProject(entry.name, path.join(projectsDir, entry.name), liveSessionIds);
+      await this.loadProject(entry.name, path.join(projectsDir, entry.name), liveResult);
     }
     this.saveCacheToDisk();
   }
@@ -270,11 +270,11 @@ export class DashboardStore extends EventEmitter {
     }
   }
 
-  /** Read ~/.claude/sessions/ and return a Set of session IDs that are truly live */
-  private getLiveSessionIds(): Set<string> {
+  /** Read ~/.claude/sessions/ and return live session IDs + whether PID tracking is available */
+  private getLiveSessionIds(): { ids: Set<string>; available: boolean } {
     const liveIds = new Set<string>();
     const sessionsDir = path.join(this.claudeDir, 'sessions');
-    if (!fs.existsSync(sessionsDir)) { return liveIds; }
+    if (!fs.existsSync(sessionsDir)) { return { ids: liveIds, available: false }; }
     try {
       const files = fs.readdirSync(sessionsDir);
       for (const file of files) {
@@ -283,11 +283,13 @@ export class DashboardStore extends EventEmitter {
           const meta = JSON.parse(content) as { pid?: number; sessionId?: string };
           if (meta.pid && meta.sessionId && this.isPidAlive(meta.pid)) {
             liveIds.add(meta.sessionId);
+          } else if (meta.pid && !this.isPidAlive(meta.pid)) {
+            try { fs.unlinkSync(path.join(sessionsDir, file)); } catch {}
           }
         } catch { /* skip malformed */ }
       }
     } catch { /* ignore */ }
-    return liveIds;
+    return { ids: liveIds, available: true };
   }
 
   /**
@@ -334,13 +336,13 @@ export class DashboardStore extends EventEmitter {
     return costs;
   }
 
-  private async loadProject(encodedId: string, projectDir: string, liveSessionIds?: Set<string>) {
+  private async loadProject(encodedId: string, projectDir: string, liveResult?: { ids: Set<string>; available: boolean }) {
     try {
       const sessionFiles = fs.readdirSync(projectDir).filter(f => f.endsWith('.jsonl'));
       if (sessionFiles.length === 0) { return; }
 
       // Use provided live IDs or fetch them (e.g. when called from onFileChanged)
-      if (!liveSessionIds) { liveSessionIds = this.getLiveSessionIds(); }
+      if (!liveResult) { liveResult = this.getLiveSessionIds(); }
 
       // ── Cache check ───────────────────────────────────────────────────────
       const maxMtime = this.getProjectMaxMtime(projectDir);
@@ -349,7 +351,7 @@ export class DashboardStore extends EventEmitter {
         // Re-apply live detection (runtime state, cannot be cached)
         const sessions = cached.sessions.map(s => ({
           ...s,
-          isActiveSession: liveSessionIds!.size > 0 ? liveSessionIds!.has(s.id) : s.isActiveSession,
+          isActiveSession: liveResult!.available ? liveResult!.ids.has(s.id) : s.isActiveSession,
         }));
         this.projects.set(encodedId, cached.project);
         this.sessions.set(encodedId, sessions);
@@ -372,14 +374,17 @@ export class DashboardStore extends EventEmitter {
         const session = this.sessionParser.parseFile(filePath, encodedId);
         if (session) {
           if (!resolvedCwd && session.cwd) { resolvedCwd = session.cwd; }
-          if (liveSessionIds.size > 0) {
-            (session as any).isActiveSession = liveSessionIds.has(session.id);
+          if (liveResult.available) {
+            (session as any).isActiveSession = liveResult.ids.has(session.id);
           }
           parsedSessions.push(session);
           totalTokens += session.totalTokens;
           totalCostUsd += session.costUsd;
           sessionCount++;
-          if (session.startTime > lastActive) { lastActive = session.startTime; }
+          const sessionLatest = session.endTime ?? (session.turns.length > 0
+            ? session.turns[session.turns.length - 1].timestamp
+            : session.startTime);
+          if (sessionLatest > lastActive) { lastActive = sessionLatest; }
         }
       }
 
@@ -462,9 +467,9 @@ export class DashboardStore extends EventEmitter {
     let activeSessionCount = 0;
 
     for (const project of projects) {
-      if (project.isActive) { activeSessionCount++; }
       const sessions = this.getSessions(project.id);
       for (const session of sessions) {
+        if (session.isActiveSession) { activeSessionCount++; }
         if (session.startTime > now - dayMs) { tokensTodayTotal += session.totalTokens; }
         if (session.startTime > now - weekMs) { tokensWeekTotal += session.totalTokens; }
       }
@@ -690,6 +695,20 @@ export class DashboardStore extends EventEmitter {
   }
 
   handleLiveEvent(event: LiveEvent) {
+    if (event.type === 'session_stop' && event.sessionId) {
+      for (const [projectId, sessions] of this.sessions) {
+        for (const session of sessions) {
+          if (session.id === event.sessionId && session.isActiveSession) {
+            (session as any).isActiveSession = false;
+            const project = this.projects.get(projectId);
+            if (project) {
+              project.isActive = sessions.some(s => s.isActiveSession);
+            }
+            break;
+          }
+        }
+      }
+    }
     this.emit('liveEvent', event);
     this.debouncedEmitUpdated();
   }

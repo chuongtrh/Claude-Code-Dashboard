@@ -90,7 +90,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Check weekly digest on activation
   alertManager.checkWeeklyDigest();
 
-  // Setup hooks (ask user on first run)
+  // Setup hooks (ask user on first run, or re-inject if outdated)
   const hooksConfigured = context.globalState.get<boolean>('hooksConfigured', false);
   if (!hooksConfigured) {
     const answer = await vscode.window.showInformationMessage(
@@ -99,10 +99,12 @@ export async function activate(context: vscode.ExtensionContext) {
       'Skip'
     );
     if (answer === 'Yes, configure hooks') {
-      await hookManager.injectHooks();
+      await hookManager.injectHooks(context.globalState);
       await context.globalState.update('hooksConfigured', true);
       vscode.window.showInformationMessage('Claude Code Dashboard hooks configured. Real-time tracking is active.');
     }
+  } else if (hookManager.needsReinjection(context.globalState)) {
+    await hookManager.injectHooks(context.globalState);
   }
 
   console.log('Claude Code Dashboard activated.');
