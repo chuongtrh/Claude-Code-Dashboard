@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/jspw/Claude-Code-Dashboard"
   },
-  "homepage": "https://github.com/jspw/Claude-Code-Dashboard#readme",
+  "homepage": "https://claude-code-dashboard-jspw.vercel.app",
   "bugs": {
     "url": "https://github.com/jspw/Claude-Code-Dashboard/issues"
   },
