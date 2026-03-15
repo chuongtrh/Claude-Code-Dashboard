@@ -150,11 +150,17 @@ export class SessionParser {
         } catch { /* skip malformed lines */ }
       }
 
-      // A session is active if there was any activity in the last 30 minutes.
-      // We can't rely on stop_reason because Claude writes "end_turn" between
-      // every turn — a session waiting for the next user message looks "complete".
+      // Heuristic fallback for when PID-based detection is unavailable.
+      // end_turn is normal between turns (user may still be typing), so use 30 min.
+      // Other stop reasons suggest the session actually ended, so use 5 min.
+      const fiveMinMs = 5 * 60 * 1000;
       const thirtyMinMs = 30 * 60 * 1000;
-      const isActiveSession = lastTimestamp > 0 && (Date.now() - lastTimestamp) < thirtyMinMs;
+      const timeSince = Date.now() - lastTimestamp;
+      const isActiveSession = lastTimestamp > 0 && (
+        lastStopReason === 'end_turn'
+          ? timeSince < thirtyMinMs
+          : timeSince < fiveMinMs
+      );
 
       // totalTokens = fresh input + cache writes + output
       // Cache reads are excluded — they're cheap re-reads of existing context
@@ -174,6 +180,7 @@ export class SessionParser {
       return {
         id: sessionId,
         projectId,
+        parentSessionId: null,
         cwd,
         isActiveSession,
         startTime,
