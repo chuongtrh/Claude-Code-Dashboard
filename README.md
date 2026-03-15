@@ -4,6 +4,11 @@ A VS Code extension that show you exactly what Claude is doing — tokens, costs
 
 **No API key required. No data leaves your machine.**
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/jspw.claude-code-dashboard?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=E8783A)](https://marketplace.visualstudio.com/items?itemName=jspw.claude-code-dashboard)
+[![Open VSX](https://img.shields.io/open-vsx/v/jspw/claude-code-dashboard?label=Open%20VSX&color=B85FFF)](https://open-vsx.org/extension/jspw/claude-code-dashboard)
+[![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](LICENSE)
+[![Website](https://img.shields.io/badge/Website-claude--code--dashboard-E8783A)](https://claude-code-dashboard-jspw.vercel.app)
+
 ---
 
 ## Screenshots
