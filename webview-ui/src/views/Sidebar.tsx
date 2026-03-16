@@ -21,9 +21,10 @@ function formatTokens(n: number): string {
 interface Props { projects: Project[]; stats: DashboardStats; }
 
 export default function Sidebar({ projects, stats }: Props) {
-  const active = projects.filter(p => p.isActive);
-  const recent = projects.filter(p => !p.isActive && Date.now() - p.lastActive < 7 * 86_400_000);
-  const rest   = projects.filter(p => !p.isActive && Date.now() - p.lastActive >= 7 * 86_400_000);
+  const unique = Array.from(new Map(projects.map(p => [p.id, p])).values());
+  const active = unique.filter(p => p.isActive);
+  const recent = unique.filter(p => !p.isActive && Date.now() - p.lastActive < 7 * 86_400_000);
+  const rest = unique.filter(p => !p.isActive && Date.now() - p.lastActive >= 7 * 86_400_000);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', fontSize: '13px', color: 'var(--vscode-foreground)' }}>
@@ -62,7 +63,7 @@ export default function Sidebar({ projects, stats }: Props) {
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--vscode-button-secondaryBackground, var(--vscode-input-background))')}
         >
           <span style={{ fontSize: '13px' }}>⊞</span>
-          Open Dashboard
+          View Dashboard
         </button>
       </div>
 
@@ -74,7 +75,7 @@ export default function Sidebar({ projects, stats }: Props) {
         <Section label="Recent" count={recent.length} accent="var(--vscode-textLink-foreground)" show={recent.length > 0}>
           {recent.map(p => <ProjectRow key={p.id} project={p} />)}
         </Section>
-        <Section label="All Projects" count={rest.length} accent="var(--vscode-descriptionForeground)" show={rest.length > 0}>
+        <Section label="Older" count={rest.length} accent="var(--vscode-descriptionForeground)" show={rest.length > 0}>
           {rest.map(p => <ProjectRow key={p.id} project={p} />)}
         </Section>
       </div>
