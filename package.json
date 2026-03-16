@@ -49,7 +49,7 @@
         {
           "id": "claudeDashboard.sidebar",
           "name": "Claude Projects",
-          "type": "tree"
+          "type": "webview"
         }
       ]
     },
