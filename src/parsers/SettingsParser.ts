@@ -8,20 +8,27 @@ export interface ClaudeSettings {
 }
 
 export class SettingsParser {
+  private readJson(filePath: string): Record<string, unknown> {
+    if (!fs.existsSync(filePath)) { return {}; }
+    try { return JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch { return {}; }
+  }
+
   readGlobalSettings(claudeDir: string): ClaudeSettings {
-    const settingsPath = path.join(claudeDir, 'settings.json');
-    if (!fs.existsSync(settingsPath)) { return {}; }
-    try {
-      return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-    } catch { return {}; }
+    return this.readJson(path.join(claudeDir, 'settings.json'));
+  }
+
+  // ~/.claude.json — user-scoped MCP servers (local & user scope)
+  readUserClaudeJson(homeDir: string): ClaudeSettings {
+    return this.readJson(path.join(homeDir, '.claude.json'));
   }
 
   readProjectSettings(projectPath: string): ClaudeSettings {
-    const settingsPath = path.join(projectPath, '.claude', 'settings.json');
-    if (!fs.existsSync(settingsPath)) { return {}; }
-    try {
-      return JSON.parse(fs.readFileSync(settingsPath, 'utf-8'));
-    } catch { return {}; }
+    return this.readJson(path.join(projectPath, '.claude', 'settings.json'));
+  }
+
+  // {project}/.mcp.json — project-scoped team-shared MCP servers
+  readProjectMcpJson(projectPath: string): ClaudeSettings {
+    return this.readJson(path.join(projectPath, '.mcp.json'));
   }
 
   readClaudeMd(dirPath: string): string | null {

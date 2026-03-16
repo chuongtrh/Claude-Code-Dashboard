@@ -27,7 +27,10 @@ const TOOL_COLORS: Record<string, string> = {
   WebFetch:   '#14b8a6',
   WebSearch:  '#3b82f6',
 };
-function toolColor(name: string): string { return TOOL_COLORS[name] ?? '#6b7280'; }
+function toolColor(name: string): string {
+  if (name.startsWith('mcp__')) { return '#06b6d4'; }   // cyan for all MCP tools
+  return TOOL_COLORS[name] ?? '#6b7280';
+}
 
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -190,7 +193,7 @@ export default function ProjectDetail({ project, sessions, subagentSessions, con
 
           <section className="min-w-0 overflow-hidden">
             {selectedSession ? (
-              <SessionDetail session={selectedSession} turns={turns} loading={turnsLoading} />
+              <SessionDetail key={selectedSession.id} session={selectedSession} turns={turns} loading={turnsLoading} />
             ) : (
               <div className="opacity-40 text-sm mt-8 text-center">Select a session to view details</div>
             )}
@@ -375,6 +378,11 @@ function McpServerRow({ server }: { server: McpServer }) {
             {server.type}
           </span>
         )}
+        {server.toolCallCount > 0 && (
+          <span className="text-xs bg-cyan-500/20 text-cyan-400 px-2 py-0.5 rounded font-mono">
+            {server.toolCallCount} call{server.toolCallCount !== 1 ? 's' : ''}
+          </span>
+        )}
       </div>
       {server.command && (
         <div className="text-xs opacity-60 font-mono mt-1">
@@ -434,7 +442,7 @@ function SessionDetail({ session, turns, loading }: { session: Session; turns: T
               <span
                 key={f}
                 title={f}
-                className="text-xs bg-[var(--vscode-badge-background)] px-2 py-0.5 rounded font-mono truncate max-w-[200px]"
+                className="text-xs bg-[var(--vscode-editor-inactiveSelectionBackground)] text-[var(--vscode-editor-foreground)] px-2 py-0.5 rounded font-mono truncate max-w-[200px] opacity-90"
               >
                 {session.filesCreated?.includes(f) ? '🆕 ' : '✏️ '}
                 {f.split('/').pop()}
@@ -449,7 +457,7 @@ function SessionDetail({ session, turns, loading }: { session: Session; turns: T
       ) : turns.length === 0 ? (
         <div className="text-xs opacity-40 text-center py-8">No turns recorded for this session.</div>
       ) : (
-        <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-1">
           {turns.map(turn => (
             <TurnBlock key={turn.id} turn={turn} />
           ))}
@@ -487,7 +495,9 @@ function TurnBlock({ turn }: { turn: Turn }) {
         <div className="mt-2 space-y-1">
           {turn.toolCalls.map(tc => (
             <div key={tc.id} className="text-xs bg-yellow-500/10 border border-yellow-500/20 rounded px-2 py-1">
-              <span className="font-mono font-semibold text-yellow-400">{tc.name}</span>
+              <span className="font-mono font-semibold" style={{ color: toolColor(tc.name) }}>
+                {tc.name.startsWith('mcp__') ? tc.name.slice(5).replace('__', '/') : tc.name}
+              </span>
               {!!tc.input?.file_path && <span className="ml-2 opacity-60">{String(tc.input.file_path)}</span>}
               {!!tc.input?.command && <span className="ml-2 opacity-60 font-mono">{String(tc.input.command).slice(0, 80)}</span>}
             </div>

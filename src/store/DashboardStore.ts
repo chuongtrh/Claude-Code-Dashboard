@@ -125,6 +125,7 @@ export interface ToolCall {
   name: string;
   input: Record<string, unknown>;
   output?: string;
+  mcpServer?: string;   // set if tool name matches mcp__<server>__<tool>
 }
 
 export interface LiveEvent {
@@ -157,6 +158,7 @@ export interface McpServer {
   command?: string;
   url?: string;
   type?: string;
+  toolCallCount: number;   // total calls across all project sessions (0 if unused)
 }
 
 export interface ProjectConfig {
@@ -469,14 +471,16 @@ export class DashboardStore extends EventEmitter {
 
     let tokensTodayTotal = 0;
     let tokensWeekTotal = 0;
+    let costTodayUsd = 0;
+    let costWeekUsd = 0;
     let activeSessionCount = 0;
 
     for (const project of projects) {
       const sessions = this.getSessions(project.id);
       for (const session of sessions) {
         if (session.isActiveSession) { activeSessionCount++; }
-        if (session.startTime > now - dayMs) { tokensTodayTotal += session.totalTokens; }
-        if (session.startTime > now - weekMs) { tokensWeekTotal += session.totalTokens; }
+        if (session.startTime > now - dayMs) { tokensTodayTotal += session.totalTokens; costTodayUsd += session.costUsd; }
+        if (session.startTime > now - weekMs) { tokensWeekTotal += session.totalTokens; costWeekUsd += session.costUsd; }
       }
     }
 
@@ -484,9 +488,9 @@ export class DashboardStore extends EventEmitter {
       totalProjects: projects.length,
       activeSessionCount,
       tokensTodayTotal,
-      costTodayUsd: this.sessionParser.estimateCost(tokensTodayTotal),
+      costTodayUsd,
       tokensWeekTotal,
-      costWeekUsd: this.sessionParser.estimateCost(tokensWeekTotal),
+      costWeekUsd,
     };
   }
 
@@ -502,14 +506,16 @@ export class DashboardStore extends EventEmitter {
       const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
 
       let tokens = 0;
+      let costUsd = 0;
       for (const [, sessions] of this.sessions) {
         for (const session of sessions) {
           if (session.startTime >= dayStart && session.startTime < dayEnd) {
             tokens += session.totalTokens;
+            costUsd += session.costUsd;
           }
         }
       }
-      result.push({ date: dateStr, tokens, costUsd: this.sessionParser.estimateCost(tokens) });
+      result.push({ date: dateStr, tokens, costUsd });
     }
 
     return result;
@@ -630,11 +636,16 @@ export class DashboardStore extends EventEmitter {
     const claudeMd = this.settingsParser.readClaudeMd(project.path);
     const projectSettings = this.settingsParser.readProjectSettings(project.path);
     const globalSettings = this.settingsParser.readGlobalSettings(this.claudeDir);
+    const userClaudeJson = this.settingsParser.readUserClaudeJson(os.homedir());
+    const projectMcpJson = this.settingsParser.readProjectMcpJson(project.path);
 
-    // Merge MCP servers from global settings and project settings
+    // Merge MCP servers from all sources (lower priority first, higher overrides)
+    // Order: global settings < ~/.claude.json (user) < project .claude/settings.json < project .mcp.json
     const rawGlobalMcp = (globalSettings.mcpServers ?? {}) as Record<string, Record<string, unknown>>;
-    const rawProjectMcp = (projectSettings.mcpServers ?? {}) as Record<string, Record<string, unknown>>;
-    const rawMcp: Record<string, Record<string, unknown>> = { ...rawGlobalMcp, ...rawProjectMcp };
+    const rawUserMcp = (userClaudeJson.mcpServers ?? {}) as Record<string, Record<string, unknown>>;
+    const rawProjectSettingsMcp = (projectSettings.mcpServers ?? {}) as Record<string, Record<string, unknown>>;
+    const rawProjectMcpJson = (projectMcpJson.mcpServers ?? {}) as Record<string, Record<string, unknown>>;
+    const rawMcp: Record<string, Record<string, unknown>> = { ...rawGlobalMcp, ...rawUserMcp, ...rawProjectSettingsMcp, ...rawProjectMcpJson };
 
     const mcpServers: Record<string, McpServer> = {};
     for (const [name, raw] of Object.entries(rawMcp)) {
@@ -643,7 +654,23 @@ export class DashboardStore extends EventEmitter {
         command: raw.command as string | undefined,
         url: raw.url as string | undefined,
         type: raw.type as string | undefined,
+        toolCallCount: 0,
       };
+    }
+
+    // Aggregate MCP tool call counts from all sessions for this project
+    const allSessions = [
+      ...(this.sessions.get(projectId) ?? []),
+      ...(this.subagentSessions.get(projectId) ?? []),
+    ];
+    for (const session of allSessions) {
+      for (const turn of session.turns) {
+        for (const tc of turn.toolCalls) {
+          if (tc.mcpServer && mcpServers[tc.mcpServer]) {
+            mcpServers[tc.mcpServer].toolCallCount++;
+          }
+        }
+      }
     }
 
     return {

@@ -55,6 +55,7 @@ export interface ToolCall {
   name: string;
   input: Record<string, unknown>;
   output?: string;
+  mcpServer?: string;   // set if tool name matches mcp__<server>__<tool>
 }
 
 export interface DashboardStats {
@@ -103,6 +104,7 @@ export interface McpServer {
   command?: string;
   url?: string;
   type?: string;
+  toolCallCount: number;   // total calls across all project sessions (0 if unused)
 }
 
 export interface ProjectConfig {
