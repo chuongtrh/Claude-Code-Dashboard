@@ -111,6 +111,7 @@ export interface ProjectConfig {
   claudeMd: string | null;
   mcpServers: Record<string, McpServer>;
   projectSettings: Record<string, unknown>;
+  commands: { name: string; content: string }[];
 }
 
 export interface ToolUsageStat {
@@ -198,10 +199,18 @@ export interface ProjectToolCall {
   timestamp: number;
 }
 
+export interface WeeklyProjectStats {
+  sessions: number;
+  tokens: number;
+  costUsd: number;
+  dailyBreakdown: { date: string; tokens: number; costUsd: number; sessions: number }[];
+}
+
 export interface ProjectStats {
   usageOverTime: DailyUsage[];
   toolUsage: ToolUsageStat[];
   promptPatterns: PatternCount[];
   efficiency: EfficiencyStats;
   recentToolCalls: ProjectToolCall[];
+  weeklyStats: WeeklyProjectStats;
 }

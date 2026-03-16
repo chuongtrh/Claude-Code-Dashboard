@@ -165,6 +165,7 @@ export interface ProjectConfig {
   claudeMd: string | null;
   mcpServers: Record<string, McpServer>;
   projectSettings: Record<string, unknown>;
+  commands: { name: string; content: string }[];
 }
 
 const CACHE_VERSION = 2;
@@ -673,10 +674,13 @@ export class DashboardStore extends EventEmitter {
       }
     }
 
+    const commands = this.settingsParser.readProjectCommands(project.path);
+
     return {
       claudeMd,
       mcpServers,
       projectSettings: projectSettings as Record<string, unknown>,
+      commands,
     };
   }
 
@@ -1125,7 +1129,33 @@ export class DashboardStore extends EventEmitter {
     allCalls.sort((a, b) => b.timestamp - a.timestamp);
     const recentToolCalls = allCalls.slice(0, 60);
 
-    return { usageOverTime, toolUsage, promptPatterns, efficiency, recentToolCalls };
+    // Weekly stats (last 7 days)
+    const weekAgo = now - 7 * dayMs;
+    const weeklySessions = sessions.filter(s => s.startTime >= weekAgo);
+    const weeklyDailyBreakdown: { date: string; tokens: number; costUsd: number; sessions: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const dayStart = now - (i + 1) * dayMs;
+      const dayEnd   = now - i * dayMs;
+      const d = new Date(dayStart);
+      const dateStr = `${d.getMonth() + 1}/${d.getDate()}`;
+      let tokens = 0; let costUsd = 0; let sessionsCount = 0;
+      for (const s of sessions) {
+        if (s.startTime >= dayStart && s.startTime < dayEnd) {
+          tokens += s.totalTokens;
+          costUsd += s.costUsd;
+          sessionsCount++;
+        }
+      }
+      weeklyDailyBreakdown.push({ date: dateStr, tokens, costUsd, sessions: sessionsCount });
+    }
+    const weeklyStats = {
+      sessions: weeklySessions.length,
+      tokens: weeklySessions.reduce((sum, s) => sum + s.totalTokens, 0),
+      costUsd: weeklySessions.reduce((sum, s) => sum + s.costUsd, 0),
+      dailyBreakdown: weeklyDailyBreakdown,
+    };
+
+    return { usageOverTime, toolUsage, promptPatterns, efficiency, recentToolCalls, weeklyStats };
   }
 
   getProjectFiles(projectId: string): {
