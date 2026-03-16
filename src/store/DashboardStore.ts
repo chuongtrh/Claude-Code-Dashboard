@@ -631,7 +631,7 @@ export class DashboardStore extends EventEmitter {
   getProjectConfig(projectId: string): ProjectConfig {
     const project = this.projects.get(projectId);
     if (!project) {
-      return { claudeMd: null, mcpServers: {}, projectSettings: {} };
+      return { claudeMd: null, mcpServers: {}, projectSettings: {}, commands: [] };
     }
 
     const claudeMd = this.settingsParser.readClaudeMd(project.path);
@@ -1040,6 +1040,7 @@ export class DashboardStore extends EventEmitter {
     promptPatterns: { category: string; count: number }[];
     efficiency: EfficiencyStats;
     recentToolCalls: { tool: string; input: Record<string, unknown>; sessionId: string; sessionDate: number; timestamp: number }[];
+    weeklyStats: { sessions: number; tokens: number; costUsd: number; dailyBreakdown: { date: string; tokens: number; costUsd: number; sessions: number }[] };
   } {
     const sessions = this.getSessions(projectId);
     const now = Date.now();
