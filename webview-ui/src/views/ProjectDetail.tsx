@@ -422,6 +422,19 @@ function McpServerRow({ server }: { server: McpServer }) {
 
 function SessionDetail({ session, turns, loading }: { session: Session; turns: Turn[]; loading: boolean }) {
   const totalCost = session.costUsd + (session.subagentCostUsd ?? 0);
+  const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+
+  const copySessionId = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(session.id);
+      setCopyState('copied');
+      window.setTimeout(() => setCopyState('idle'), 1500);
+    } catch {
+      setCopyState('failed');
+      window.setTimeout(() => setCopyState('idle'), 2000);
+    }
+  }, [session.id]);
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs opacity-60">
@@ -453,6 +466,26 @@ function SessionDetail({ session, turns, loading }: { session: Session; turns: T
           <span className="text-blue-400" title="Subagent sessions cost">
             +${session.subagentCostUsd.toFixed(4)} subagents
           </span>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="text-xs opacity-50 shrink-0">Session ID</span>
+        <code
+          className="text-xs bg-[var(--vscode-editor-inactiveSelectionBackground)] text-[var(--vscode-editor-foreground)] px-2 py-1 rounded font-mono truncate"
+          title={session.id}
+        >
+          {session.id}
+        </code>
+        <button
+          onClick={() => void copySessionId()}
+          className="text-xs px-2 py-1 rounded border border-[var(--vscode-panel-border)] hover:bg-[var(--vscode-list-hoverBackground)] transition-colors shrink-0"
+          title="Copy session ID"
+        >
+          {copyState === 'copied' ? 'Copied' : 'Copy'}
+        </button>
+        {copyState === 'failed' && (
+          <span className="text-xs text-red-400 shrink-0">Copy failed</span>
         )}
       </div>
 
