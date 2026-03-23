@@ -18,6 +18,7 @@ interface Props {
 }
 
 type Tab = 'sessions' | 'claudemd' | 'tools' | 'mcp' | 'subagents' | 'files' | 'commands' | 'weekly';
+
 const TAB_LABELS: { key: Tab; label: string }[] = [
   { key: 'sessions',  label: 'Sessions' },
   { key: 'weekly',    label: 'Weekly' },

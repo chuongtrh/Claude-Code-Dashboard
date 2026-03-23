@@ -274,10 +274,10 @@ export default function SessionDetail({ session, turns, loading }: { session: Se
     try {
       await navigator.clipboard.writeText(session.id);
       setCopyState('copied');
-      window.setTimeout(() => setCopyState('idle'), 1500);
+      setTimeout(() => setCopyState('idle'), 1500);
     } catch {
       setCopyState('failed');
-      window.setTimeout(() => setCopyState('idle'), 2000);
+      setTimeout(() => setCopyState('idle'), 2000);
     }
   }, [session.id]);
 
