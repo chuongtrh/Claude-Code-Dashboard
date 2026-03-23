@@ -11,6 +11,23 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ---
 
+## [1.6.0](https://github.com/chuongtrh/Claude-Code-Dashboard/compare/claude-code-dashboard-v1.5.0...claude-code-dashboard-v1.6.0) (2026-03-23)
+
+
+### Features
+
+* markdown show preview for session's prompts ([2d7878a](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/2d7878a2148228f5c4a8a414a1cb24be7eb7a015))
+
+
+### Bug Fixes
+
+* release publish trigger ([c3af781](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/c3af781250eba89ebeeaf8d0ec766c7e40c9c4fd))
+* **release:** resolve release version issue ([f6d21a2](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/f6d21a25139bd87e0ef5c795b962298e1d90bb8b))
+* **release:** resolve release version issue ([f6d21a2](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/f6d21a25139bd87e0ef5c795b962298e1d90bb8b))
+* **release:** resolve release version issue ([afb43e4](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/afb43e4ae03ca1e2d7f63fa70439426e7499c60f))
+* **release:** resolve release version issue ([ced3e89](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/ced3e8987459882c2ca1ba4354486bcb8b09d86c))
+* **ui:** address PR review comments ([51cf1e5](https://github.com/chuongtrh/Claude-Code-Dashboard/commit/51cf1e5d02567ea1cc7c53e81dd59b7e570e32cd))
+
 ## [1.5.0](https://github.com/jspw/Claude-Code-Dashboard/compare/claude-code-dashboard-v1.4.0...claude-code-dashboard-v1.5.0) (2026-03-22)
 
 
